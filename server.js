@@ -6,6 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 // Express middleware
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+
 const db = new sqlite3.Database('./db/election.db', err => {
     if (err) {
         return console.error(err.message);
@@ -13,18 +14,40 @@ const db = new sqlite3.Database('./db/election.db', err => {
     console.log('Connected to the election database');
 });
 
-// DB response all array
-db.all(`SELECT * FROM candidates`, (err, rows) => {
-    //console.log(rows);
+// Get all candidates
+app.get('/api/candidates', (req, res) => {
+    const sql = `SELECT * FROM candidates`;
+    const params = [];
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: rows
+        });
+    });
 });
 
-//DB for single id in array
-// db.get(`SELECT * FROM candidates WHERE id = 1`, (err, row) => {
-//     if (err) {
-//         console.log(err);
-//     }
-//     console.log(row);
-// });
+// Get single candidate
+app.get('/api/candidate/:id', (req, res) => {
+    const sql = `SELECT * FROM candidates 
+                 WHERE id = ?`;
+    const params = [req.params.id];
+    db.get(sql, params, (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+
+        res.json({
+            message: 'success',
+            data: row
+        });
+    });
+});
 
 // Delete a candidate
 // db.run(`DELETE FROM candidates WHERE id =?`, 1, function(err, result) {
